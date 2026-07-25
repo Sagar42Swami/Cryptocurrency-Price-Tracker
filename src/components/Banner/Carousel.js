@@ -6,16 +6,20 @@ import { Link } from "react-router-dom";
 import { TrendingCoins } from "../../config/api";
 import { CryptoState } from "../../CryptoContext";
 import { numberWithCommas } from "../CoinsTable";
+import { getFallbackTrendingCoins } from "../../config/fallbackData";
 
 const Carousel = () => {
   const [trending, setTrending] = useState([]);
   const { currency, symbol } = CryptoState();
 
   const fetchTrendingCoins = async () => {
-    const { data } = await axios.get(TrendingCoins(currency));
-
-    console.log(data);
-    setTrending(data);
+    try {
+      const { data } = await axios.get(TrendingCoins(currency));
+      setTrending(data);
+    } catch (error) {
+      console.warn("Failed to fetch trending coins from API, using fallback data", error);
+      setTrending(getFallbackTrendingCoins(currency));
+    }
   };
 
   useEffect(() => {

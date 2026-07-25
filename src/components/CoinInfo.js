@@ -11,6 +11,27 @@ import {
 import SelectButton from "./SelectButton";
 import { chartDays } from "../config/data";
 import { CryptoState } from "../CryptoContext";
+import { getFallbackHistoricalChart } from "../config/fallbackData";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const CoinInfo = ({ coin }) => {
   const [historicData, setHistoricData] = useState();
@@ -39,9 +60,15 @@ const CoinInfo = ({ coin }) => {
   const classes = useStyles();
 
   const fetchHistoricData = async () => {
-    const { data } = await axios.get(HistoricalChart(coin.id, days, currency));
-    setflag(true);
-    setHistoricData(data.prices);
+    try {
+      const { data } = await axios.get(HistoricalChart(coin.id, days, currency));
+      setflag(true);
+      setHistoricData(data.prices);
+    } catch (error) {
+      console.warn("Failed to fetch historical chart data, using fallback data", error);
+      setflag(true);
+      setHistoricData(getFallbackHistoricalChart(coin.id, days, currency));
+    }
   };
 
   console.log(coin);
@@ -54,7 +81,7 @@ const CoinInfo = ({ coin }) => {
   const darkTheme = createTheme({
     palette: {
       primary: {
-        main: "#ggg",
+        main: "#fff",
       },
       type: "dark",
     },

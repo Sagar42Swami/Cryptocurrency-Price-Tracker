@@ -20,6 +20,7 @@ import axios from "axios";
 import { CoinList } from "../config/api";
 import { useHistory } from "react-router-dom";
 import { CryptoState } from "../CryptoContext";
+import { getFallbackCoinList } from "../config/fallbackData";
 
 export function numberWithCommas(x) {
   return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -37,8 +38,11 @@ export default function CoinsTable() {
     row: {
       backgroundColor: "#16171a",
       cursor: "pointer",
+      transition: "all 0.3s ease",
       "&:hover": {
-        backgroundColor: "#131111",
+        backgroundColor: "#1c1e22",
+        transform: "scale(1.005)",
+        boxShadow: "0px 4px 20px rgba(238, 188, 29, 0.15)",
       },
       fontFamily: "Montserrat",
     },
@@ -63,10 +67,13 @@ export default function CoinsTable() {
 
   const fetchCoins = async () => {
     setLoading(true);
-    const { data } = await axios.get(CoinList(currency));
-    console.log(data);
-
-    setCoins(data);
+    try {
+      const { data } = await axios.get(CoinList(currency));
+      setCoins(data);
+    } catch (error) {
+      console.warn("Failed to fetch coins list from API, using fallback data", error);
+      setCoins(getFallbackCoinList(currency));
+    }
     setLoading(false);
   };
 
@@ -78,8 +85,8 @@ export default function CoinsTable() {
   const handleSearch = () => {
     return coins.filter(
       (coin) =>
-        coin.name.toLowerCase().includes(search) ||
-        coin.symbol.toLowerCase().includes(search)
+        coin.name.toLowerCase().includes(search.toLowerCase()) ||
+        coin.symbol.toLowerCase().includes(search.toLowerCase())
     );
   };
 
@@ -96,7 +103,10 @@ export default function CoinsTable() {
           label="Search For a Crypto Currency.."
           variant="outlined"
           style={{ marginBottom: 20, width: "100%" }}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
         />
         <TableContainer component={Paper}>
           {loading ? (
@@ -193,7 +203,7 @@ export default function CoinsTable() {
 
         {/* Comes from @material-ui/lab */}
         <Pagination
-          count={(handleSearch()?.length / 10).toFixed(0)}
+          count={Math.ceil(handleSearch()?.length / 10) || 1}
           style={{
             padding: 20,
             width: "100%",
