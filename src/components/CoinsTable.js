@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import Pagination from "@material-ui/lab/Pagination";
+import StarIcon from "@material-ui/icons/Star";
+import StarBorderIcon from "@material-ui/icons/StarBorder";
 import {
   Container,
   createTheme,
@@ -29,7 +31,15 @@ export default function CoinsTable() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
-  const { currency, symbol, coins, loading } = CryptoState();
+  const {
+    currency,
+    symbol,
+    coins,
+    loading,
+    watchlist,
+    addToWatchlist,
+    removeFromWatchlist,
+  } = CryptoState();
 
   const useStyles = makeStyles({
     row: {
@@ -92,7 +102,7 @@ export default function CoinsTable() {
             <Table aria-label="simple table">
               <TableHead style={{ backgroundColor: "#EEBC1D" }}>
                 <TableRow>
-                  {["Coin", "Price", "24h Change", "Market Cap"].map((head) => (
+                  {["", "Coin", "Price", "24h Change", "Market Cap"].map((head) => (
                     <TableCell
                       style={{
                         color: "black",
@@ -100,7 +110,7 @@ export default function CoinsTable() {
                         fontFamily: "Montserrat",
                       }}
                       key={head}
-                      align={head === "Coin" ? "" : "right"}
+                      align={head === "" || head === "Coin" ? "" : "right"}
                     >
                       {head}
                     </TableCell>
@@ -113,12 +123,32 @@ export default function CoinsTable() {
                   .slice((page - 1) * 10, (page - 1) * 10 + 10)
                   .map((row) => {
                     const profit = row.price_change_percentage_24h > 0;
+                    const isWatchlisted = watchlist?.includes(row.id);
                     return (
                       <TableRow
                         onClick={() => history.push(`/coins/${row.id}`)}
                         className={classes.row}
                         key={row.name}
                       >
+                        <TableCell style={{ width: 50, paddingRight: 0 }}>
+                          <span
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (isWatchlisted) {
+                                removeFromWatchlist(row.id);
+                              } else {
+                                addToWatchlist(row.id);
+                              }
+                            }}
+                            style={{ cursor: "pointer", color: isWatchlisted ? "gold" : "grey" }}
+                          >
+                            {isWatchlisted ? (
+                              <StarIcon style={{ color: "gold" }} />
+                            ) : (
+                              <StarBorderIcon />
+                            )}
+                          </span>
+                        </TableCell>
                         <TableCell
                           component="th"
                           scope="row"
