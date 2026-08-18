@@ -10,6 +10,12 @@ const CryptoContext = ({ children }) => {
   const [symbol, setSymbol] = useState("₹");
   const [coins, setCoins] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [watchlist, setWatchlist] = useState(
+    JSON.parse(localStorage.getItem("watchlist")) || []
+  );
+  const [portfolio, setPortfolio] = useState(
+    JSON.parse(localStorage.getItem("portfolio")) || []
+  );
 
   const fetchCoins = async () => {
     setLoading(true);
@@ -33,6 +39,38 @@ const CryptoContext = ({ children }) => {
     else if (currency === "USD") setSymbol("$");
   }, [currency]);
 
+  useEffect(() => {
+    localStorage.setItem("watchlist", JSON.stringify(watchlist));
+  }, [watchlist]);
+
+  useEffect(() => {
+    localStorage.setItem("portfolio", JSON.stringify(portfolio));
+  }, [portfolio]);
+
+  const addToWatchlist = (coinId) => {
+    if (!watchlist.includes(coinId)) {
+      setWatchlist([...watchlist, coinId]);
+    }
+  };
+
+  const removeFromWatchlist = (coinId) => {
+    setWatchlist(watchlist.filter((id) => id !== coinId));
+  };
+
+  const addToPortfolio = (coinId, quantity, buyPrice) => {
+    const newTransaction = {
+      id: coinId,
+      qty: parseFloat(quantity),
+      buyPrice: parseFloat(buyPrice),
+      timestamp: Date.now(),
+    };
+    setPortfolio([...portfolio, newTransaction]);
+  };
+
+  const removeFromPortfolio = (timestamp) => {
+    setPortfolio(portfolio.filter((tx) => tx.timestamp !== timestamp));
+  };
+
   return (
     <Crypto.Provider
       value={{
@@ -42,6 +80,12 @@ const CryptoContext = ({ children }) => {
         coins,
         loading,
         fetchCoins,
+        watchlist,
+        addToWatchlist,
+        removeFromWatchlist,
+        portfolio,
+        addToPortfolio,
+        removeFromPortfolio,
       }}
     >
       {children}
