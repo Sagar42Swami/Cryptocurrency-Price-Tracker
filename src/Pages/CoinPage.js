@@ -1,4 +1,4 @@
-import { LinearProgress, makeStyles, Typography } from "@material-ui/core";
+import { LinearProgress, makeStyles, Typography, Button } from "@material-ui/core";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -12,7 +12,7 @@ const CoinPage = () => {
   const { id } = useParams();
   const [coin, setCoin] = useState();
 
-  const { currency, symbol } = CryptoState();
+  const { currency, symbol, watchlist, addToWatchlist, removeFromWatchlist } = CryptoState();
 
   const fetchCoin = async () => {
     try {
@@ -81,6 +81,8 @@ const CoinPage = () => {
   }));
 
   const classes = useStyles();
+
+  const inWatchlist = watchlist?.includes(coin?.id);
 
   if (!coin) return <LinearProgress style={{ backgroundColor: "gold" }} />;
 
@@ -152,6 +154,28 @@ const CoinPage = () => {
               M
             </Typography>
           </span>
+          
+          <Button
+            variant="contained"
+            style={{
+              width: "100%",
+              height: 40,
+              marginTop: 20,
+              backgroundColor: inWatchlist ? "#ff4d4d" : "gold",
+              color: inWatchlist ? "white" : "black",
+              fontFamily: "Montserrat",
+              fontWeight: "bold",
+            }}
+            onClick={() => {
+              if (inWatchlist) {
+                removeFromWatchlist(coin.id);
+              } else {
+                addToWatchlist(coin.id);
+              }
+            }}
+          >
+            {inWatchlist ? "Remove from Watchlist" : "Add to Watchlist"}
+          </Button>
         </div>
       </div>
       <CoinInfo coin={coin} />
