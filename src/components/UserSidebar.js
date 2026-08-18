@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   makeStyles,
   Drawer,
@@ -168,10 +168,44 @@ export default function UserSidebar({ open, onClose }) {
     portfolio,
     addToPortfolio,
     removeFromPortfolio,
+    alerts,
+    addAlert,
+    removeAlert,
+    clearTriggeredAlerts,
   } = CryptoState();
 
   const handleTabChange = (_, newValue) => {
     setActiveTab(newValue);
+  };
+
+  // Alert creation state
+  const [alertCoinId, setAlertCoinId] = useState("");
+  const [alertCondition, setAlertCondition] = useState("above");
+  const [alertPrice, setAlertPrice] = useState("");
+
+  useEffect(() => {
+    if (coins.length > 0 && !alertCoinId) {
+      setAlertCoinId(coins[0].id);
+      setAlertPrice(coins[0].current_price.toFixed(2));
+    }
+  }, [coins, alertCoinId]);
+
+  const handleAlertCoinChange = (coinId) => {
+    setAlertCoinId(coinId);
+    const coin = coins.find((c) => c.id === coinId);
+    if (coin) {
+      setAlertPrice(coin.current_price.toFixed(2));
+    }
+  };
+
+  const handleCreateAlert = () => {
+    if (!alertCoinId || !alertPrice) return;
+    addAlert(alertCoinId, alertPrice, alertCondition);
+    // Reset price field
+    const coin = coins.find((c) => c.id === alertCoinId);
+    if (coin) {
+      setAlertPrice(coin.current_price.toFixed(2));
+    }
   };
 
   // Open modal and prefill buy price if a coin is selected
@@ -276,8 +310,9 @@ export default function UserSidebar({ open, onClose }) {
 
         {/* Navigation Tabs */}
         <Tabs value={activeTab} onChange={handleTabChange} className={classes.tabs} variant="fullWidth">
-          <Tab label="Watchlist" className={classes.tab} />
-          <Tab label="Portfolio" className={classes.tab} />
+          <Tab label="Watchlist" className={classes.tab} style={{ minWidth: 0, padding: 0 }} />
+          <Tab label="Portfolio" className={classes.tab} style={{ minWidth: 0, padding: 0 }} />
+          <Tab label="Alerts" className={classes.tab} style={{ minWidth: 0, padding: 0 }} />
         </Tabs>
 
         {/* Watchlist Tab Panel */}
@@ -450,6 +485,143 @@ export default function UserSidebar({ open, onClose }) {
                           size="small"
                         >
                           <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Alerts Tab Panel */}
+        {activeTab === 2 && (
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            
+            {/* Quick Add Alert Panel */}
+            <div className={classes.portfolioSummary} style={{ borderLeft: "4px solid #ff4d4d", display: "flex", flexDirection: "column", gap: 10 }}>
+              <Typography variant="body2" style={{ color: "grey", fontWeight: 600 }}>
+                CREATE NEW ALERTS
+              </Typography>
+              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <FormControl variant="outlined" style={{ flex: 1 }}>
+                  <Select
+                    value={alertCoinId}
+                    onChange={(e) => handleAlertCoinChange(e.target.value)}
+                    style={{ color: "white", height: 40 }}
+                  >
+                    {coins.map((coin) => (
+                      <MenuItem key={coin.id} value={coin.id}>
+                        {coin.symbol.toUpperCase()}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <FormControl variant="outlined" style={{ width: 90 }}>
+                  <Select
+                    value={alertCondition}
+                    onChange={(e) => setAlertCondition(e.target.value)}
+                    style={{ color: "white", height: 40 }}
+                  >
+                    <MenuItem value="above">Above</MenuItem>
+                    <MenuItem value="below">Below</MenuItem>
+                  </Select>
+                </FormControl>
+
+                <TextField
+                  placeholder="Price"
+                  type="number"
+                  variant="outlined"
+                  value={alertPrice}
+                  onChange={(e) => setAlertPrice(e.target.value)}
+                  style={{ width: 100 }}
+                  inputProps={{
+                    style: { color: "white", padding: "10px 14px", height: 20 },
+                  }}
+                />
+              </div>
+              
+              <Button
+                variant="contained"
+                onClick={handleCreateAlert}
+                style={{
+                  backgroundColor: "gold",
+                  color: "black",
+                  fontFamily: "Montserrat",
+                  fontWeight: "bold",
+                  height: 36,
+                }}
+              >
+                Set Alert
+              </Button>
+            </div>
+
+            {/* Clear Triggered Button */}
+            {alerts.some(a => a.triggered) && (
+              <Button
+                variant="outlined"
+                onClick={clearTriggeredAlerts}
+                style={{
+                  color: "rgb(244, 67, 54)",
+                  borderColor: "rgb(244, 67, 54)",
+                  fontFamily: "Montserrat",
+                  fontWeight: "bold",
+                  marginBottom: 10,
+                }}
+                size="small"
+                fullWidth
+              >
+                Clear Triggered Alerts
+              </Button>
+            )}
+
+            {/* Alerts List */}
+            <div style={{ flex: 1, overflowY: "auto", paddingRight: 5 }}>
+              {alerts.length === 0 ? (
+                <Typography style={{ color: "grey", textAlign: "center", marginTop: 30 }}>
+                  No price alerts configured.
+                </Typography>
+              ) : (
+                [...alerts].reverse().map((alert) => {
+                  const coin = coins.find((c) => c.id === alert.id);
+                  if (!coin) return null;
+
+                  return (
+                    <div
+                      key={alert.timestamp}
+                      className={classes.watchlistCoin}
+                      style={{ cursor: "default", borderLeft: alert.triggered ? "3px solid grey" : "3px solid rgb(14, 203, 129)" }}
+                    >
+                      <div className={classes.coinDetail}>
+                        <img src={coin.image} alt={coin.name} height="25" />
+                        <div>
+                          <Typography style={{ fontWeight: "bold", fontSize: 13, textTransform: "uppercase" }}>
+                            {coin.symbol} {alert.condition === "above" ? "≥" : "≤"}
+                          </Typography>
+                          <Typography variant="caption" style={{ color: "lightgrey" }}>
+                            Target: {symbol}{numberWithCommas(alert.price)}
+                          </Typography>
+                        </div>
+                      </div>
+                      
+                      <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                        {alert.triggered ? (
+                          <span style={{ fontSize: 10, backgroundColor: "#333", color: "darkgrey", padding: "2px 6px", borderRadius: 4, fontWeight: "bold" }}>
+                            Triggered
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: 10, backgroundColor: "rgba(14, 203, 129, 0.15)", color: "rgb(14, 203, 129)", padding: "2px 6px", borderRadius: 4, fontWeight: "bold" }}>
+                            Active
+                          </span>
+                        )}
+                        <IconButton
+                          className={classes.deleteBtn}
+                          onClick={() => removeAlert(alert.timestamp)}
+                          size="small"
+                        >
+                          <DeleteIcon fontSize="small" style={{ fontSize: 16 }} />
                         </IconButton>
                       </div>
                     </div>
