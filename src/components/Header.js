@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import {
   AppBar,
   Container,
@@ -5,6 +6,7 @@ import {
   Select,
   Toolbar,
   Typography,
+  Button,
 } from "@material-ui/core";
 import {
   createTheme,
@@ -13,6 +15,7 @@ import {
 } from "@material-ui/core/styles";
 import { useHistory } from "react-router-dom";
 import { CryptoState } from "../CryptoContext";
+import UserSidebar from "./UserSidebar";
 
 const useStyles = makeStyles((theme) => ({
   title: {
@@ -36,6 +39,7 @@ const darkTheme = createTheme({
 function Header() {
   const classes = useStyles();
   const { currency, setCurrency } = CryptoState();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const history = useHistory();
 
@@ -51,7 +55,6 @@ function Header() {
             >
               Crypto Tracker
             </Typography>
-            {/* <Button color="inherit">Login</Button> */}
             <Select
               variant="outlined"
               labelId="demo-simple-select-label"
@@ -63,9 +66,24 @@ function Header() {
               <MenuItem value={"USD"}>USD</MenuItem>
               <MenuItem value={"INR"}>INR</MenuItem>
             </Select>
+            <Button
+              variant="contained"
+              style={{
+                height: 40,
+                marginLeft: 15,
+                backgroundColor: "gold",
+                color: "black",
+                fontFamily: "Montserrat",
+                fontWeight: "bold",
+              }}
+              onClick={() => setSidebarOpen(true)}
+            >
+              Workspace
+            </Button>
           </Toolbar>
         </Container>
       </AppBar>
+      <UserSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
     </ThemeProvider>
   );
 }
