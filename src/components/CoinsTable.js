@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import Pagination from "@material-ui/lab/Pagination";
 import StarIcon from "@material-ui/icons/Star";
@@ -18,8 +18,6 @@ import {
   Table,
   Paper,
 } from "@material-ui/core";
-import axios from "axios";
-import { CoinList } from "../config/api";
 import { useHistory } from "react-router-dom";
 import { CryptoState } from "../CryptoContext";
 
@@ -32,7 +30,6 @@ export default function CoinsTable() {
   const [page, setPage] = useState(1);
 
   const {
-    currency,
     symbol,
     coins,
     loading,
