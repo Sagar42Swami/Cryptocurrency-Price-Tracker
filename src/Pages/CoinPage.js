@@ -12,7 +12,7 @@ const CoinPage = () => {
   const { id } = useParams();
   const [coin, setCoin] = useState();
 
-  const { currency, symbol, watchlist, addToWatchlist, removeFromWatchlist } = CryptoState();
+  const { currency, symbol, coins, watchlist, addToWatchlist, removeFromWatchlist } = CryptoState();
 
   const fetchCoin = async () => {
     try {
@@ -82,24 +82,26 @@ const CoinPage = () => {
 
   const classes = useStyles();
 
-  const inWatchlist = watchlist?.includes(coin?.id);
+  const cachedCoin = coins?.find((c) => c.id === id);
+  const inWatchlist = watchlist?.includes(id);
 
-  if (!coin) return <LinearProgress style={{ backgroundColor: "gold" }} />;
+  // Blocker loader only shown if both remote details and global cached details are missing
+  if (!coin && !cachedCoin) return <LinearProgress style={{ backgroundColor: "gold" }} />;
 
   return (
     <div className={classes.container}>
       <div className={classes.sidebar}>
         <img
-          src={coin?.image.large}
-          alt={coin?.name}
+          src={coin?.image?.large || cachedCoin?.image}
+          alt={coin?.name || cachedCoin?.name}
           height="200"
           style={{ marginBottom: 20 }}
         />
         <Typography variant="h3" className={classes.heading}>
-          {coin?.name}
+          {coin?.name || cachedCoin?.name}
         </Typography>
         <Typography variant="subtitle1" className={classes.description}>
-          <span dangerouslySetInnerHTML={{ __html: coin?.description?.en?.split(". ")[0] }} />.
+          <span dangerouslySetInnerHTML={{ __html: coin?.description?.en?.split(". ")[0] || "Fetching details..." }} />.
         </Typography>
         <div className={classes.marketData}>
           <span style={{ display: "flex" }}>
@@ -113,7 +115,7 @@ const CoinPage = () => {
                 fontFamily: "Montserrat",
               }}
             >
-              {numberWithCommas(coin?.market_cap_rank)}
+              {numberWithCommas(coin?.market_cap_rank || cachedCoin?.market_cap_rank || "")}
             </Typography>
           </span>
 
@@ -130,7 +132,7 @@ const CoinPage = () => {
             >
               {symbol}{" "}
               {numberWithCommas(
-                coin?.market_data.current_price[currency.toLowerCase()]
+                (coin?.market_data?.current_price?.[currency.toLowerCase()] || cachedCoin?.current_price || 0).toFixed(2)
               )}
             </Typography>
           </span>
@@ -147,7 +149,7 @@ const CoinPage = () => {
             >
               {symbol}{" "}
               {numberWithCommas(
-                coin?.market_data.market_cap[currency.toLowerCase()]
+                (coin?.market_data?.market_cap?.[currency.toLowerCase()] || cachedCoin?.market_cap || 0)
                   .toString()
                   .slice(0, -6)
               )}
@@ -168,9 +170,9 @@ const CoinPage = () => {
             }}
             onClick={() => {
               if (inWatchlist) {
-                removeFromWatchlist(coin.id);
+                removeFromWatchlist(id);
               } else {
-                addToWatchlist(coin.id);
+                addToWatchlist(id);
               }
             }}
           >
